@@ -4,7 +4,909 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Blueprint — Content Engine</title>
+<link href="https://f<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Blueprint — Content Engine</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C97A;
+    --gold-dark: #8B6B2A;
+    --black: #0A0A0A;
+    --surface: #111111;
+    --surface2: #1A1A1A;
+    --surface3: #222222;
+    --border: rgba(201,168,76,0.15);
+    --border-hover: rgba(201,168,76,0.35);
+    --text: #F0EDE6;
+    --text-muted: #8A8478;
+    --text-dim: #4A4640;
+    --green: #2ECC71;
+    --red: #E74C3C;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  header {
+    padding: 48px 0 32px;
+    border-bottom: 0.5px solid var(--border);
+    margin-bottom: 40px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .logo-block h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .logo-block h1 span { color: var(--gold); }
+
+  .logo-block p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-weight: 300;
+  }
+
+  .api-panel {
+    background: var(--surface2);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    min-width: 300px;
+  }
+
+  .api-panel .api-title {
+    font-size: 11px;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-family: 'Syne', sans-serif;
+  }
+
+  .api-panel .api-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+
+  .api-hint a {
+    color: var(--gold);
+    text-decoration: none;
+  }
+
+  .api-hint a:hover { text-decoration: underline; }
+
+  .api-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .api-input-row input {
+    flex: 1;
+    background: var(--surface3);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    color: var(--text);
+    font-family: monospace;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .api-input-row input:focus { border-color: var(--gold); }
+
+  .api-save-btn {
+    background: var(--gold);
+    color: var(--black);
+    border: none;
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+
+  .api-save-btn:hover { background: var(--gold-light); }
+
+  .api-status {
+    font-size: 11px;
+    margin-top: 7px;
+    height: 14px;
+  }
+
+  .api-status.ok { color: var(--green); }
+  .api-status.err { color: var(--red); }
+
+  .tab-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+
+  .tab-btn {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 18px;
+    border-radius: 40px;
+    border: 0.5px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.2px;
+  }
+
+  .tab-btn:hover { border-color: var(--border-hover); color: var(--text); }
+  .tab-btn.active { background: var(--gold); color: var(--black); border-color: var(--gold); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 16px;
+  }
+
+  .controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  select {
+    width: 100%;
+    background: var(--surface2);
+    border: 0.5px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 36px 10px 14px;
+    font-size: 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A8478' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+
+  select:focus { border-color: var(--gold); }
+
+  .gen-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--gold);
+    color: var(--black);
+    border: none;
+    border-radius: 12px;
+    padding: 13px 28px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+    margin-bottom: 24px;
+  }
+
+  .gen-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
+  .gen-btn:active { transform: translateY(0); }
+  .gen-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(0,0,0,0.25);
+    border-top-color: var(--black);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  .gen-btn.loading .spinner { display: inline-block; }
+  .gen-btn.loading .btn-icon { display: none; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .weekly-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .day-card {
+    background: var(--surface2);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .day-card:hover { border-color: var(--border-hover); }
+  .day-card.active { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+
+  .dc-day {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .dc-theme { font-size: 12px; font-weight: 500; color: var(--text); margin-top: 5px; line-height: 1.3; }
+  .dc-sub { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+  .output-container {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .output-header span {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 500;
+  }
+
+  .output-actions { display: flex; gap: 8px; }
+
+  .action-btn {
+    background: transparent;
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 14px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+  }
+
+  .action-btn:hover { border-color: var(--border-hover); color: var(--text); }
+  .action-btn.copied { border-color: var(--green); color: var(--green); }
+
+  .output-body {
+    padding: 24px;
+    min-height: 220px;
+    font-size: 15px;
+    line-height: 1.85;
+    color: var(--text);
+    white-space: pre-wrap;
+    font-weight: 300;
+  }
+
+  .output-body.placeholder {
+    color: var(--text-dim);
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 14px;
+  }
+
+  .char-count {
+    font-size: 12px;
+    color: var(--text-dim);
+    padding: 8px 24px 16px;
+    text-align: right;
+    border-top: 0.5px solid var(--border);
+    display: none;
+  }
+
+  footer {
+    margin-top: 60px;
+    padding: 24px 0 40px;
+    border-top: 0.5px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  footer p { font-size: 12px; color: var(--text-dim); }
+  footer a { font-size: 12px; color: var(--gold); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface2);
+    border: 0.5px solid var(--border-hover);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 13px;
+    color: var(--text);
+    z-index: 1000;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+    max-width: 280px;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--black); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  @media (max-width: 600px) {
+    header { flex-direction: column; }
+    .api-panel { min-width: unset; width: 100%; }
+    .logo-block h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <header>
+    <div class="logo-block">
+      <h1>The <span>Blueprint</span></h1>
+      <p>Content Engine — by Bonaventure Armoh</p>
+    </div>
+
+    <div class="api-panel">
+      <div class="api-title">🔑 Google Gemini API Key (Free)</div>
+      <div class="api-hint">
+        Get your free key at <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a> — no credit card needed. Sign in with Google, click "Create API Key", paste it here.
+      </div>
+      <div class="api-input-row">
+        <input type="password" id="api-key-input" placeholder="AIza..." autocomplete="off">
+        <button class="api-save-btn" onclick="saveKey()">Save</button>
+      </div>
+      <div class="api-status" id="api-status"></div>
+    </div>
+  </header>
+
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab('daily', this)">Daily Post</button>
+    <button class="tab-btn" onclick="switchTab('weekly', this)">Weekly Plan</button>
+    <button class="tab-btn" onclick="switchTab('lesson', this)">Lesson Drop</button>
+    <button class="tab-btn" onclick="switchTab('challenge', this)">Challenge</button>
+    <button class="tab-btn" onclick="switchTab('motivation', this)">Motivator</button>
+  </div>
+
+  <!-- DAILY POST -->
+  <div class="panel active" id="panel-daily">
+    <div class="section-title">Daily Post Generator</div>
+    <div class="controls-grid">
+      <div class="field">
+        <label>Category</label>
+        <select id="daily-cat">
+          <option value="financial literacy and money management">Financial Literacy</option>
+          <option value="mindset, success habits and mental strength">Mindset & Success</option>
+          <option value="digital skills, AI tools and making money online">Digital Skills & AI</option>
+          <option value="entrepreneurship and starting a business with little capital">Entrepreneurship</option>
+          <option value="leadership and becoming someone people respect and follow">Leadership</option>
+          <option value="trading, forex and investing basics">Trading & Investing</option>
+          <option value="personal branding and building your reputation online">Personal Branding</option>
+          <option value="discipline, productivity and managing your time like the rich do">Discipline & Productivity</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Tone</label>
+        <select id="daily-tone">
+          <option value="direct and motivating, like a big brother talking real to a younger sibling">Big Brother Energy</option>
+          <option value="teaching with real examples from everyday life in Ghana and Africa">Practical Teacher</option>
+          <option value="short story that leads into a lesson">Story-Driven</option>
+          <option value="challenging and calling people out to do better">Challenge Mode</option>
+          <option value="reflective and thought-provoking, making people sit with the question">Reflective</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Format</label>
+        <select id="daily-format">
+          <option value="a punchy WhatsApp group post with one key lesson and a call to action at the end">WhatsApp Post</option>
+          <option value="a short lesson with 3 clear numbered points and one action step">3-Point Lesson</option>
+          <option value="one powerful question to get the group talking and debating">Discussion Starter</option>
+          <option value="one quick practical tip with a real-life African example">Quick Tip</option>
+          <option value="a short story followed by a clear lesson that hits">Mini Story</option>
+        </select>
+      </div>
+    </div>
+    <button class="gen-btn" id="btn-daily" onclick="generate('daily')">
+      <span class="btn-icon">⚡</span><span class="spinner"></span> Generate Post
+    </button>
+  </div>
+
+  <!-- WEEKLY PLAN -->
+  <div class="panel" id="panel-weekly">
+    <div class="section-title">Weekly Content Calendar</div>
+    <div class="weekly-grid">
+      <div class="day-card" onclick="generateDay(0,this)"><div class="dc-day">Mon</div><div class="dc-theme">Mindset Monday</div><div class="dc-sub">mental reset</div></div>
+      <div class="day-card" onclick="generateDay(1,this)"><div class="dc-day">Tue</div><div class="dc-theme">Skills Tuesday</div><div class="dc-sub">practical skill</div></div>
+      <div class="day-card" onclick="generateDay(2,this)"><div class="dc-day">Wed</div><div class="dc-theme">Wealth Wednesday</div><div class="dc-sub">money lesson</div></div>
+      <div class="day-card" onclick="generateDay(3,this)"><div class="dc-day">Thu</div><div class="dc-theme">Action Thursday</div><div class="dc-sub">challenge/task</div></div>
+      <div class="day-card" onclick="generateDay(4,this)"><div class="dc-day">Fri</div><div class="dc-theme">Feature Friday</div><div class="dc-sub">success story</div></div>
+      <div class="day-card" onclick="generateDay(5,this)"><div class="dc-day">Sat</div><div class="dc-theme">Strategy Sat</div><div class="dc-sub">business deep dive</div></div>
+      <div class="day-card" onclick="generateDay(6,this)"><div class="dc-day">Sun</div><div class="dc-theme">Reflection Sunday</div><div class="dc-sub">review & goals</div></div>
+    </div>
+    <button class="gen-btn" id="btn-weekly" onclick="generate('weekly')">
+      <span class="btn-icon">📅</span><span class="spinner"></span> Generate Full Week
+    </button>
+  </div>
+
+  <!-- LESSON DROP -->
+  <div class="panel" id="panel-lesson">
+    <div class="section-title">Lesson Drop</div>
+    <div class="controls-grid">
+      <div class="field">
+        <label>Topic</label>
+        <select id="lesson-topic">
+          <option value="how to open your first savings account and build a saving habit from scratch in Ghana">Savings Basics</option>
+          <option value="understanding stocks, forex and crypto — what they are, how they work, and how beginners in Ghana can actually start">Stocks, Forex & Crypto</option>
+          <option value="how to use AI tools like ChatGPT and others to make money and grow a business in Ghana today">AI for Income</option>
+          <option value="how to start a real business in Ghana with little or no capital — practical steps, not motivational theory">Zero-Capital Business</option>
+          <option value="how to build your personal brand on social media as a young Ghanaian so opportunities come to you">Personal Branding</option>
+          <option value="how to build multiple streams of income as a young person in Ghana — freelancing, digital products, reselling and more">Multiple Income Streams</option>
+          <option value="how wealthy people think differently about money, risk and time — the mindset shifts that change everything">Wealth Mindset</option>
+          <option value="how to find freelancing and remote work that pays in dollars, even from Ghana — platforms, skills and how to start">Freelancing & Remote Work</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Level</label>
+        <select id="lesson-level">
+          <option value="complete beginner — explain from zero, no jargon, assume they know nothing about this topic">Beginner</option>
+          <option value="someone who knows the basics but needs real practical steps to go further">Intermediate</option>
+          <option value="someone ready to act — give them advanced moves and very specific things to do this week">Action-Ready</option>
+        </select>
+      </div>
+    </div>
+    <button class="gen-btn" id="btn-lesson" onclick="generate('lesson')">
+      <span class="btn-icon">📚</span><span class="spinner"></span> Generate Lesson
+    </button>
+  </div>
+
+  <!-- CHALLENGE -->
+  <div class="panel" id="panel-challenge">
+    <div class="section-title">Group Challenge</div>
+    <div class="controls-grid">
+      <div class="field">
+        <label>Duration</label>
+        <select id="chal-duration">
+          <option value="1-day">1 Day</option>
+          <option value="3-day">3 Days</option>
+          <option value="7-day">7 Days</option>
+          <option value="30-day">30 Days</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Focus</label>
+        <select id="chal-focus">
+          <option value="financial discipline — tracking every cedi spent and cutting waste">Financial Discipline</option>
+          <option value="learning one new digital or income skill from scratch">Learn a New Skill</option>
+          <option value="building a consistent powerful morning routine">Morning Routine</option>
+          <option value="starting a small income stream from zero">Start an Income Stream</option>
+          <option value="reading and building knowledge every single day">Daily Knowledge</option>
+          <option value="connecting with 5 new valuable people who can help your future">Networking</option>
+        </select>
+      </div>
+    </div>
+    <button class="gen-btn" id="btn-challenge" onclick="generate('challenge')">
+      <span class="btn-icon">🏆</span><span class="spinner"></span> Generate Challenge
+    </button>
+  </div>
+
+  <!-- MOTIVATION -->
+  <div class="panel" id="panel-motivation">
+    <div class="section-title">Motivational Message</div>
+    <div class="controls-grid">
+      <div class="field">
+        <label>Theme</label>
+        <select id="motiv-theme">
+          <option value="rising from poverty and building real wealth through discipline and smart moves">Rising From Nothing</option>
+          <option value="why consistency and small daily actions compound into massive results over time — with real examples">Power of Consistency</option>
+          <option value="why young Africans and Ghanaians have a massive advantage right now if they move smart and fast">African Advantage</option>
+          <option value="why waiting for the perfect time or perfect conditions is keeping you stuck and broke">Stop Waiting, Start Now</option>
+          <option value="the real cost of staying comfortable and playing small when you were born for more">Cost of Comfort</option>
+          <option value="how to turn a hard background, pain and struggle into the greatest fuel for success">Turning Pain into Power</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Length</label>
+        <select id="motiv-length">
+          <option value="short — 2 to 3 paragraphs, punchy, hits immediately">Short & Hard-Hitting</option>
+          <option value="medium — 4 to 5 paragraphs, include a real or relatable African story">With a Story</option>
+        </select>
+      </div>
+    </div>
+    <button class="gen-btn" id="btn-motivation" onclick="generate('motivation')">
+      <span class="btn-icon">🔥</span><span class="spinner"></span> Generate Message
+    </button>
+  </div>
+
+  <!-- OUTPUT -->
+  <div class="output-container">
+    <div class="output-header">
+      <span id="output-label">Output</span>
+      <div class="output-actions">
+        <button class="action-btn" id="copy-btn" onclick="copyOutput()">Copy</button>
+        <button class="action-btn" onclick="clearOutput()">Clear</button>
+      </div>
+    </div>
+    <div class="output-body placeholder" id="output-body">Select your options above and hit Generate ⚡</div>
+    <div class="char-count" id="char-count"></div>
+  </div>
+
+  <footer>
+    <p>The Blueprint Content Engine © 2025 — Bonaventure Armoh</p>
+    <a href="https://aistudio.google.com/app/apikey" target="_blank">Get free Gemini API key →</a>
+  </footer>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let apiKey = localStorage.getItem('bp_gemini_key') || '';
+
+const DAYS_DATA = [
+  { name:'Monday', theme:'Mindset Monday', focus:'killing bad mental patterns and beliefs about money, building the right mindset for success' },
+  { name:'Tuesday', theme:'Skills Tuesday', focus:'teaching one practical digital or income skill they can actually start this week' },
+  { name:'Wednesday', theme:'Wealth Wednesday', focus:'a real money or financial literacy lesson — saving, investing, understanding how wealth is built' },
+  { name:'Thursday', theme:'Action Thursday', focus:'a specific hands-on task or challenge they must complete TODAY — pure action, no theory' },
+  { name:'Friday', theme:'Feature Friday', focus:'a real young African who built something meaningful, with lessons the group can apply right now' },
+  { name:'Saturday', theme:'Strategy Saturday', focus:'a deep dive into a business model, opportunity or entrepreneurship strategy relevant to Ghana and Africa' },
+  { name:'Sunday', theme:'Reflection Sunday', focus:'reviewing the past week honestly, celebrating wins, setting sharp focused goals for the week ahead' },
+];
+
+const VOICE = `CRITICAL WRITING RULES — follow every single one:
+- Write exactly like a sharp, real young man from Ghana talking to his peers — not American, not corporate, not a TED talk
+- Short sentences. Straight talk. No big vocabulary unless it's actually needed
+- NEVER start with "Good morning Blueprint family" or any greeting — jump straight into the message
+- NEVER use phrases like "it is imperative", "in conclusion", "one must", "it is worth noting" — that is textbook language not WhatsApp
+- Write as if you're in the group too, not above it — use "we" and "us"
+- Be blunt when needed — real mentors don't sugarcoat hard truths
+- Emojis are fine but keep them natural — not after every single sentence
+- NEVER sound like AI: no "Certainly!", no "In today's fast-paced world", no "Absolutely!", no "It's important to remember"
+- Use Ghanaian or African context, examples, and references naturally — not forced
+- End every post with something that makes people want to respond — a question, a challenge, a statement that stings
+- The whole thing should feel like someone who has actually struggled and is building their way up, talking to people who are on the same road`;
+
+function saveKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (!val.startsWith('AIza')) {
+    setStatus('err', '⚠ That does not look like a Gemini key — it should start with AIza');
+    return;
+  }
+  apiKey = val;
+  localStorage.setItem('bp_gemini_key', apiKey);
+  document.getElementById('api-key-input').value = '';
+  setStatus('ok', '✓ Key saved — ready to generate');
+}
+
+function setStatus(type, msg) {
+  const el = document.getElementById('api-status');
+  el.textContent = msg;
+  el.className = 'api-status ' + type;
+}
+
+window.addEventListener('load', () => {
+  if (apiKey) setStatus('ok', '✓ Key loaded — ready to go');
+});
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function generateDay(idx, el) {
+  document.querySelectorAll('.day-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  const d = DAYS_DATA[idx];
+  const prompt = `You create WhatsApp content for "The Blueprint" — a group in Ghana run by Bonaventure Armoh, a 21-year-old who grew up with nothing and is building his way to wealth. The group prepares young Ghanaians and Africans for success, money, leadership and the digital age.
+
+${VOICE}
+
+Today is ${d.name} — ${d.theme}
+Focus for today: ${d.focus}
+
+Write the WhatsApp post for today. Under 220 words.`;
+  callGemini(prompt, 'btn-weekly', d.theme);
+}
+
+function buildPrompt(type) {
+  if (type === 'daily') {
+    const cat = document.getElementById('daily-cat').value;
+    const tone = document.getElementById('daily-tone').value;
+    const fmt = document.getElementById('daily-format').value;
+    return `You create WhatsApp content for "The Blueprint" — a group in Ghana run by Bonaventure Armoh, 21, building from zero to empire. The group is for young Ghanaians and Africans who want to build real wealth, skills and a future.
+
+${VOICE}
+
+Write ${fmt} about: ${cat}
+Tone: ${tone}
+Under 230 words. Make it feel like a real human wrote this, not AI.`;
+  }
+
+  if (type === 'weekly') {
+    return `You plan content for "The Blueprint" — a WhatsApp group in Ghana for young people building wealth and success. Run by Bonaventure Armoh, 21, from a poor background.
+
+${VOICE}
+
+Write a 7-day WhatsApp content plan with one real post per day:
+
+Monday — Mindset Monday: kill bad mental patterns, build success beliefs
+Tuesday — Skills Tuesday: teach one practical digital or income skill
+Wednesday — Wealth Wednesday: money or financial literacy lesson
+Thursday — Action Thursday: specific task to do TODAY, no theory
+Friday — Feature Friday: real young African success story with lessons
+Saturday — Strategy Saturday: business or entrepreneurship deep dive
+Sunday — Reflection Sunday: week review and goal setting
+
+Each day: punchy title + the actual post (under 180 words). Make each one sound like a real person, not AI. Separate each day clearly with the day name as a header.`;
+  }
+
+  if (type === 'lesson') {
+    const topic = document.getElementById('lesson-topic').value;
+    const level = document.getElementById('lesson-level').value;
+    return `You create educational content for "The Blueprint" — a WhatsApp group in Ghana teaching young people wealth, skills and success. Run by Bonaventure Armoh, 21.
+
+${VOICE}
+
+Write a lesson drop on: ${topic}
+Level: ${level}
+
+Use this exact structure — no deviations:
+
+📚 [Catchy lesson title]
+
+[Opening hook — 1 or 2 sentences that grab attention immediately]
+
+[Core lesson — explain it clearly like you're talking to your friend. Use real African examples. Break it into clear parts with emoji markers or bold headers. No academic language. No jargon without explanation.]
+
+KEY TAKEAWAYS:
+1. [Takeaway]
+2. [Takeaway]
+3. [Takeaway]
+
+YOUR MOVE TODAY:
+[One specific action they can take right now or today]
+
+💬 Drop a ✅ if this helped you.
+— The Blueprint 🏆`;
+  }
+
+  if (type === 'challenge') {
+    const dur = document.getElementById('chal-duration').value;
+    const focus = document.getElementById('chal-focus').value;
+    return `You create challenge content for "The Blueprint" — a WhatsApp group in Ghana for young people building from zero. Run by Bonaventure Armoh.
+
+${VOICE}
+
+Create a ${dur} group challenge focused on: ${focus}
+
+Use this structure:
+🔥 CHALLENGE NAME: [Make it feel exclusive and exciting]
+🎯 WHY THIS MATTERS: [2 sentences — connect it directly to their future and their money]
+📋 THE CHALLENGE: [Step by step breakdown — very specific, not vague. Tell them exactly what to do each day or each step]
+✅ HOW TO WIN: [What completing it looks like — be specific]
+📣 HOW TO JOIN: [Simple instruction, e.g. "Drop 'I'M IN 🔥' and tag one person who needs this"]
+
+Make it feel like missing this challenge is a mistake they cannot afford.`;
+  }
+
+  if (type === 'motivation') {
+    const theme = document.getElementById('motiv-theme').value;
+    const length = document.getElementById('motiv-length').value;
+    return `You write motivational messages for "The Blueprint" — a WhatsApp group in Ghana. Led by Bonaventure Armoh, 21, from a poor background, building towards generational wealth.
+
+${VOICE}
+
+Write a ${length} motivational message on this theme: ${theme}
+
+Extra rules for this one:
+- Open with a line that stops someone mid-scroll — not "Good morning", not "Hey guys"
+- Speak directly to someone who woke up today feeling stuck, broke or like nothing is moving — that is your audience
+- Reference Ghanaian or African reality naturally where it fits
+- End with something powerful enough that they screenshot and share it
+- Zero clichés — no "Rome wasn't built in a day", no "the sky is the limit", none of that
+- Write like someone who has been through real struggle, not someone who read motivational books`;
+  }
+}
+
+async function callGemini(prompt, btnId, label) {
+  if (!apiKey) {
+    showToast('Add your Gemini API key first — it is free');
+    setStatus('err', '⚠ No API key saved yet — get one free at aistudio.google.com');
+    return;
+  }
+
+  setLoading(btnId, true);
+  setOutputLoading(label || 'Generating...');
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.92,
+            topP: 0.95,
+            maxOutputTokens: 1200
+          },
+          safetySettings: [
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
+          ]
+        })
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.json();
+      if (res.status === 400) {
+        setStatus('err', '⚠ Invalid API key — check and re-save');
+        showToast('Invalid key — go to aistudio.google.com and copy it again');
+      } else {
+        showToast('Error: ' + (err.error?.message || 'Something went wrong'));
+      }
+      setOutputEmpty();
+      return;
+    }
+
+    const data = await res.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Nothing returned. Try again.';
+    setOutputContent(text, label);
+
+  } catch (e) {
+    showToast('Network error — check your connection');
+    setOutputEmpty();
+  } finally {
+    setLoading(btnId, false);
+  }
+}
+
+function generate(type) {
+  const labels = { daily:'Daily Post', weekly:'Weekly Plan', lesson:'Lesson Drop', challenge:'Challenge', motivation:'Motivator' };
+  callGemini(buildPrompt(type), 'btn-' + type, labels[type]);
+}
+
+function setLoading(btnId, on) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.disabled = on;
+  btn.classList.toggle('loading', on);
+}
+
+function setOutputLoading(label) {
+  const body = document.getElementById('output-body');
+  body.className = 'output-body placeholder';
+  body.textContent = 'Generating ' + label + '...';
+  document.getElementById('output-label').textContent = label;
+  document.getElementById('char-count').style.display = 'none';
+}
+
+function setOutputContent(text, label) {
+  const body = document.getElementById('output-body');
+  body.className = 'output-body';
+  body.textContent = text;
+  document.getElementById('output-label').textContent = label || 'Output';
+  const cc = document.getElementById('char-count');
+  cc.style.display = 'block';
+  cc.textContent = text.length + ' characters';
+}
+
+function setOutputEmpty() {
+  const body = document.getElementById('output-body');
+  body.className = 'output-body placeholder';
+  body.textContent = 'Something went wrong. Try again.';
+  document.getElementById('char-count').style.display = 'none';
+}
+
+function clearOutput() {
+  const body = document.getElementById('output-body');
+  body.className = 'output-body placeholder';
+  body.textContent = 'Select your options above and hit Generate ⚡';
+  document.getElementById('char-count').style.display = 'none';
+  document.getElementById('output-label').textContent = 'Output';
+}
+
+function copyOutput() {
+  const body = document.getElementById('output-body');
+  if (body.classList.contains('placeholder')) return;
+  navigator.clipboard.writeText(body.textContent).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    showToast('Copied — paste it straight into WhatsApp ✓');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2500);
+  });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
+onts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
     --gold: #C9A84C;
